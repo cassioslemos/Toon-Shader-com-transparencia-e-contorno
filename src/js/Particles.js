@@ -252,7 +252,7 @@ function main() {
                 shadowColor: { value: new THREE.Color(0xc0c0c0) },
                 lightColor: { value: new THREE.Color(0xdcdcdc) },
                 uAlpha: { value: alpha },
-            }, vertexShader: vertCode, fragmentShader: fragCode, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true
+            }, vertexShader: vertCode, fragmentShader: fragCode, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, stencilWrite: true, stencilRef: 1, stencilFunc:THREE.AlwaysStencilFunc, stencilZPass: THREE.ReplaceStencilOp
         });
         particle.material = SphereMaterials;
     }
@@ -326,7 +326,7 @@ function main() {
                 shadowColor: { value: new THREE.Color(0xc0c0c0) },
                 lightColor: { value: new THREE.Color(0xdcdcdc) },
                 uAlpha: { value: alpha },
-            }, vertexShader: vertCode, fragmentShader: fragCode, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true
+            }, vertexShader: vertCode, fragmentShader: fragCode, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, stencilWrite: true, stencilRef: 1, stencilFunc: THREE.NotEqualStencilFunc
         });
         particle.material = SphereMaterials;
     }
@@ -443,7 +443,7 @@ function main() {
                     shadowColor: { value: new THREE.Color(0xc0c0c0) },
                     lightColor: { value: new THREE.Color(0xdcdcdc) },
                     uAlpha: { value: alpha },
-                }, vertexShader: this.vertCode, fragmentShader: this.fragCode, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true
+                }, vertexShader: this.vertCode, fragmentShader: this.fragCode, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, stencilWrite: true, stencilRef: 1, stencilFunc:THREE.AlwaysStencilFunc, stencilZPass: THREE.ReplaceStencilOp
             });
             this.particle = new THREE.Mesh(geometry, SphereMaterials);
             this.particle.position.set(position.x, position.y, position.z);
@@ -612,7 +612,7 @@ function main() {
                         void main(){
                             color = vec4(0,0,0,uAlpha);
                         }
-                        `, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, 
+                        `, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, stencilWrite: true, stencilRef: 1, stencilFunc: THREE.NotEqualStencilFunc
                         });
                         p_contorno.scale.set(6.0, 6.0, 0);
                         particlesOutline.push(p_contorno);
@@ -756,7 +756,7 @@ function main() {
                 void main(){
                     color = vec4(0,0,0,uAlpha);
                 }
-                `, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true
+                `, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, stencilWrite: true, stencilRef: 1, stencilFunc: THREE.NotEqualStencilFunc
                         });
                         p_contorno.scale.set(0.8, 0.8, 0);
                         particlesOutline2.push(p_contorno);
