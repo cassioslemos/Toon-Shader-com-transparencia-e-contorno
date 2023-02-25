@@ -252,7 +252,7 @@ function main() {
                 shadowColor: { value: new THREE.Color(0xc0c0c0) },
                 lightColor: { value: new THREE.Color(0xdcdcdc) },
                 uAlpha: { value: alpha },
-            }, vertexShader: vertCode, fragmentShader: fragCode, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true
+            }, vertexShader: vertCode, fragmentShader: fragCode, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, stencilWrite: true, stencilRef: 1, stencilFunc:THREE.AlwaysStencilFunc, stencilZPass: THREE.ReplaceStencilOp
         });
         particle.material = SphereMaterials;
     }
@@ -326,7 +326,7 @@ function main() {
                 shadowColor: { value: new THREE.Color(0xc0c0c0) },
                 lightColor: { value: new THREE.Color(0xdcdcdc) },
                 uAlpha: { value: alpha },
-            }, vertexShader: vertCode, fragmentShader: fragCode, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true
+            }, vertexShader: vertCode, fragmentShader: fragCode, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, stencilWrite: true, stencilRef: 1, stencilFunc: THREE.NotEqualStencilFunc
         });
         particle.material = SphereMaterials;
     }
@@ -443,7 +443,7 @@ function main() {
                     shadowColor: { value: new THREE.Color(0xc0c0c0) },
                     lightColor: { value: new THREE.Color(0xdcdcdc) },
                     uAlpha: { value: alpha },
-                }, vertexShader: this.vertCode, fragmentShader: this.fragCode, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true
+                }, vertexShader: this.vertCode, fragmentShader: this.fragCode, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, stencilWrite: true, stencilRef: 1, stencilFunc:THREE.AlwaysStencilFunc, stencilZPass: THREE.ReplaceStencilOp
             });
             this.particle = new THREE.Mesh(geometry, SphereMaterials);
             this.particle.position.set(position.x, position.y, position.z);
@@ -612,9 +612,9 @@ function main() {
                         void main(){
                             color = vec4(0,0,0,uAlpha);
                         }
-                        `, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, 
+                        `, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, stencilWrite: true, stencilRef: 1, stencilFunc: THREE.NotEqualStencilFunc
                         });
-                        p_contorno.scale.set(6.0, 6.0, 0);
+                        p_contorno.scale.set(6.5, 6.5, 0);
                         particlesOutline.push(p_contorno);
                     }
                     particles.push(p);
@@ -756,11 +756,12 @@ function main() {
                 void main(){
                     color = vec4(0,0,0,uAlpha);
                 }
-                `, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true
+                `, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, stencilWrite: true, stencilRef: 2, stencilFunc: THREE.NotEqualStencilFunc
                         });
                         p_contorno.scale.set(0.8, 0.8, 0);
                         particlesOutline2.push(p_contorno);
                     }
+                    p.getParticle().material.stencilRef = 2;
                     particles2.push(p);
                     Emissionthen2 = now;
                 }
@@ -774,9 +775,12 @@ function main() {
                     newalpha = particles2[i].getAlpha() - (particles2[i].getAlpha() * particles2[i].getActualLifetime(now) / (particles2[i].lifetime - 2.5));
                 particles2[i].update(deltat, newalpha);
                 if(outlineon){
+                    particles2[i].getParticle().material.stencilRef = 2;
                     particlesOutline2[i].position.set(particlesOutline2[i].position.x + particles2[i].getMovement().x * deltat, particlesOutline2[i].position.y + (particles2[i].getMovement().y) * deltat, particlesOutline2[i].position.z);
-                    if(transparencyon && transparencylifetimeon)
+                    if(transparencyon && transparencylifetimeon){
                         changeTransparencyOutline(particlesOutline2[i], newalpha);
+                        particlesOutline2[i].material.stencilRef = 2;
+                    }
                 }
                 if (particles2[i].getActualLifetime(now) < 1) {
                     particles2[i].getParticle().scale.set(particles2[i].getParticle().scale.x + 0.02, particles2[i].getParticle().scale.y + 0.02, particles2[i].getParticle().scale.z + 0.02);
