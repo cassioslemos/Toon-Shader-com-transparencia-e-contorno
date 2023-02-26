@@ -1,6 +1,7 @@
 import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threejs/r132/build/three.module.js';
 import { ColladaLoader } from 'https://threejsfundamentals.org/threejs/resources/threejs/r132/examples/jsm/loaders/ColladaLoader.js';
 import { FBXLoader } from 'https://threejsfundamentals.org/threejs/resources/threejs/r132/examples/jsm/loaders/FBXLoader.js';
+import {OBJLoader} from 'https://threejsfundamentals.org/threejs/resources/threejs/r132/examples/jsm/loaders/OBJLoader.js';
 
 function getRandomFloat(min, max, decimals) {
     const str = (Math.random() * (max - min) + min).toFixed(decimals);
@@ -23,7 +24,7 @@ function main() {
     const renderer = new THREE.WebGLRenderer({ canvas });
     var gl = renderer.getContext();
     const fov = 45;
-    var flagcampones = 0; //se a animação do aladdin acabou
+    var flagpeasant = 0; //se a animação do aladdin acabou
     const aspect = 2;
     const near = 0.1;
     const far = 150000;
@@ -31,6 +32,7 @@ function main() {
     var camerarotationy = 0; //informa a rotação da camera
     let Emissionthen = 0;
     let Emissionthen2 = 0;
+    var style = 2; //estilo da particula: 0 para bolha, 1 para poeira, 2 para nuvem
     var transparencyon = true; //ativa transparencia
     var transparencylifetimeon = true; //ativa transparencia de acordo com o tempo de vida da particula
     var outlineon = true; //ativa contorno
@@ -43,11 +45,11 @@ function main() {
     var ceu = new THREE.Mesh(ceugeometry, ceuMaterials);
     scene.add(ceu);
 
-    function loopCampones(mixer) { //faz com que o próximo movement do loop seja de onde o ultimo parou
+    function looppeasant(mixer) { //faz com que o próximo movement do loop seja de onde o ultimo parou
         var objeto = mixer.getRoot();
         mixer.addEventListener('loop', function (e) {
-            if (flagcampones == 0) {
-                flagcampones = 1;
+            if (flagpeasant == 0) {
+                flagpeasant = 1;
                 objeto.rotateY(degToRad(180));
                 objeto.translateX(-3);
                 objeto.translateZ(-18);
@@ -60,8 +62,8 @@ function main() {
         if (mixers) {
             for (var i = 0; i < mixers.length; i++) {
                 mixers[i].update(delta);
-                if (mixers[i].name == "campones") { //se for animação do aladdin
-                    loopCampones(mixers[i]);
+                if (mixers[i].name == "peasant") { //se for animação do aladdin
+                    looppeasant(mixers[i]);
                 }
             }
         }
@@ -86,37 +88,44 @@ function main() {
 
      const fbxLoader = new FBXLoader(); 
      const colladaloader = new ColladaLoader();
-     fbxLoader.load('/Models/Cidade/TEST2.fbx', (city) => { //cria cidade
-         city.translateZ(-1000);
-         city.scale.set(10,10,10);
-         scene.add( city );
+     const objLoader = new OBJLoader();
+     fbxLoader.load('/Models/town/TEST2.fbx', (town) => { //cria town
+         town.translateZ(-1000);
+         town.scale.set(10,10,10);
+         scene.add( town );
      } );
  
-     colladaloader.load( 'Models/Campones/Campones.dae', function ( collada ) { //cria aladdin
-         var campones = collada.scene;
-         campones.traverse( function ( node ) {
+     colladaloader.load( 'Models/peasant/peasant.dae', function ( collada ) { //cria aladdin
+         var peasant = collada.scene;
+         peasant.traverse( function ( node ) {
              if ( node.isSkinnedMesh ) {
                  node.geometry.computeVertexNormals(); //computa vetores normais
              }
          } );
-       campones.translateX(50);
-       campones.translateY(0);
-       campones.translateZ(-750);
-       campones.scale.set(0.1,0.1,0.1);
-       campones.children[0].children.forEach(child => {
+       peasant.translateX(50);
+       peasant.translateY(0);
+       peasant.translateZ(-750);
+       peasant.scale.set(0.1,0.1,0.1);
+       peasant.children[0].children.forEach(child => {
              if (child.type == "LineSegments") {
                  child.visible = false; 
              }
          });
-         const mixer = new THREE.AnimationMixer(campones);
-         const idle = mixer.clipAction(campones.animations[0]); 
+         const mixer = new THREE.AnimationMixer(peasant);
+         const idle = mixer.clipAction(peasant.animations[0]); 
          idle.clampWhenFinished = true;
          idle.play();
-         mixer.name="campones";
+         mixer.name="peasant";
          mixers.push(mixer);
-         scene.add(campones);
+         scene.add(peasant);
  
      } ); 
+
+     var cloud;
+
+     objLoader.load('/Models/cloud/cloud.obj', (root) => {
+        cloud = root.children[0].geometry;
+    });  
 
 
     function bubbleSortParticles(array, camera, outline) {
@@ -209,8 +218,6 @@ function main() {
             precision mediump float;
             uniform vec3 shadowColor;
             uniform vec3 lightColor;
-            uniform sampler2D tDiffuse;
-            uniform vec2 resolution;
             uniform float uAlpha;
             
 
@@ -228,7 +235,7 @@ function main() {
 
             
             void main(){
-                vec3 light_direction = vec3(1,1.0,3.14) - FragPos;
+                vec3 light_direction = vec3(500,500,500) - FragPos;
                 float temp = max(0.0,dot(n, normalize(light_direction)));
                 color = vec4(temp, temp, temp, 1.0);
                 color = clamp(color,0.0,1.0);
@@ -236,9 +243,9 @@ function main() {
                 color[0] = pow(color[0], gamma);
                 color[1] = pow(color[1], gamma);
                 color[2] = pow(color[2], gamma);
-                color = color * 6.0;
+                color = color * 100.0;
                 color = floor(color);
-                color = color / 6.0;
+                color = color / 100.0;
                 color[0] = pow(color[0], 1.4/gamma);
                 color[1] = pow(color[1], 1.0/gamma);
                 color[2] = pow(color[2], 1.0/gamma);
@@ -248,11 +255,10 @@ function main() {
             `;
         var SphereMaterials = new THREE.RawShaderMaterial({
             uniforms: {
-                resolution: { value: new THREE.Vector2() },
-                shadowColor: { value: new THREE.Color(0xc0c0c0) },
+                shadowColor: { value: new THREE.Color(0x808080) },
                 lightColor: { value: new THREE.Color(0xdcdcdc) },
                 uAlpha: { value: alpha },
-            }, vertexShader: vertCode, fragmentShader: fragCode, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true
+            }, vertexShader: vertCode, fragmentShader: fragCode, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, stencilWrite: true, stencilRef: 1, stencilFunc:THREE.AlwaysStencilFunc, stencilZPass: THREE.ReplaceStencilOp
         });
         particle.material = SphereMaterials;
     }
@@ -268,9 +274,7 @@ function main() {
             
 
             in vec3 position;
-            in vec3 normal;
-            in vec4 TexCoord;
-            in vec2 uv;
+
 
 
 
@@ -298,10 +302,6 @@ function main() {
             `;
         var fragCode = `# version 300 es
             precision mediump float;
-            uniform vec3 shadowColor;
-            uniform vec3 lightColor;
-            uniform sampler2D tDiffuse;
-            uniform vec2 resolution;
             uniform float uAlpha;
             
 
@@ -322,11 +322,8 @@ function main() {
             `;
         var SphereMaterials = new THREE.RawShaderMaterial({
             uniforms: {
-                resolution: { value: new THREE.Vector2() },
-                shadowColor: { value: new THREE.Color(0xc0c0c0) },
-                lightColor: { value: new THREE.Color(0xdcdcdc) },
                 uAlpha: { value: alpha },
-            }, vertexShader: vertCode, fragmentShader: fragCode, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true
+            }, vertexShader: vertCode, fragmentShader: fragCode, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, stencilWrite: true, stencilRef: 1, stencilFunc: THREE.NotEqualStencilFunc
         });
         particle.material = SphereMaterials;
     }
@@ -337,6 +334,7 @@ function main() {
             if (!transparencyon)
                 alpha = 1.0;
             var geometry = new THREE.SphereGeometry(2, 32, 16);
+            if(style == 1){
             geometry.dynamic = true;
             geometry.attributes.position.needsUpdate = true;
             var positions = geometry.getAttribute("position");
@@ -355,6 +353,7 @@ function main() {
             }
             geometry.setAttribute('position', positions);
             geometry.computeVertexNormals();
+        }
             this.vertCode = `# version 300 es
             uniform mat4 projectionMatrix;
             uniform mat4 viewMatrix;
@@ -401,8 +400,6 @@ function main() {
             precision mediump float;
             uniform vec3 shadowColor;
             uniform vec3 lightColor;
-            uniform sampler2D tDiffuse;
-            uniform vec2 resolution;
             uniform float uAlpha;
             
 
@@ -420,16 +417,16 @@ function main() {
 
             
             void main(){
-                vec3 light_direction = vec3(1,1.0,3.14) - FragPos;
+                vec3 light_direction = vec3(500,500,500) - FragPos;
                 float temp = max(0.0,dot(n, normalize(light_direction)));
                 color = vec4(temp, temp, temp, 1.0);
                 float gamma = 3.7;
                 color[0] = pow(color[0], gamma);
                 color[1] = pow(color[1], gamma);
                 color[2] = pow(color[2], gamma);
-                color = color * 6.0;
+                color = color * 100.0;
                 color = floor(color);
-                color = color / 6.0;
+                color = color / 100.0;
                 color[0] = pow(color[0], 1.0/gamma);
                 color[1] = pow(color[1], 1.0/gamma);
                 color[2] = pow(color[2], 1.0/gamma);
@@ -439,16 +436,17 @@ function main() {
             `;
             var SphereMaterials = new THREE.RawShaderMaterial({
                 uniforms: {
-                    resolution: { value: new THREE.Vector2() },
                     shadowColor: { value: new THREE.Color(0xc0c0c0) },
                     lightColor: { value: new THREE.Color(0xdcdcdc) },
                     uAlpha: { value: alpha },
-                }, vertexShader: this.vertCode, fragmentShader: this.fragCode, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true
+                }, vertexShader: this.vertCode, fragmentShader: this.fragCode, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, stencilWrite: true, stencilRef: 1, stencilFunc:THREE.AlwaysStencilFunc, stencilZPass: THREE.ReplaceStencilOp
             });
-            this.particle = new THREE.Mesh(geometry, SphereMaterials);
+            if(style == 2)
+                this.particle = new THREE.Mesh(cloud, SphereMaterials);
+            else
+                this.particle = new THREE.Mesh(geometry, SphereMaterials);
             this.particle.position.set(position.x, position.y, position.z);
             this.movement = movement;
-            this.movementside = getRandomFloat(-1.0, 1.0, 0);
             if (this.movement.x >= 0 && this.movement.x < 0.4) {
                 this.movement.x += 1;
             }
@@ -470,7 +468,7 @@ function main() {
         }
 
         update(deltat, newalpha) {
-            this.particle.position.set(this.particle.position.x + this.movement.x * deltat, this.particle.position.y + (this.movement.y) * deltat, this.particle.position.z);
+            this.particle.position.set(this.particle.position.x + this.movement.x * deltat, this.particle.position.y + (this.movement.y) * deltat, this.particle.position.z + (this.movement.z) * deltat);
             if(transparencyon && transparencylifetimeon){
                 changeTransparency(this.particle, newalpha);
             }
@@ -531,23 +529,20 @@ function main() {
             camera.aspect = canvas.clientWidth / canvas.clientHeight;
             camera.updateProjectionMatrix();
         }
-        //Particle System fumaca do campones
+        //Particle System fumaca do peasant
         let p;
         let quant_particles = 1000;
         let emission_rate_time = 30;
         if (now - Emissionthen >= 0.5) {
             for (let i = 0; i < emission_rate_time; i++) {
                 if (particles.length < quant_particles) {
-                    var movement = new THREE.Vector3(getRandomFloat(-15.0, 15.0, 2), getRandomFloat(5.0, 20.0, 2), 0);
+                    var movement = new THREE.Vector3(getRandomFloat(-15.0, 15.0, 2), getRandomFloat(5.0, 20.0, 2), getRandomFloat(-5.0, 5.0, 2));
                     p = new Particle(new THREE.Vector3(40.0, 5.0, -760.0), now, 0.2, 6, movement);
                     p.getParticle().scale.set(5.5, 5.5, 5.5);
                     if(outlineon){
                         let p_contorno = p.getParticle().clone();
                         p_contorno.material = new THREE.RawShaderMaterial({
                             uniforms: {
-                                resolution: { value: new THREE.Vector2() },
-                                shadowColor: { value: new THREE.Color(0xc0c0c0) },
-                                lightColor: { value: new THREE.Color(0xdcdcdc) },
                                 uAlpha: { value: p.getAlpha() },
                             }, vertexShader: `# version 300 es
                         uniform mat4 projectionMatrix;
@@ -559,11 +554,6 @@ function main() {
                         
             
                         in vec3 position;
-                        in vec3 normal;
-                        in vec4 TexCoord;
-                        in vec2 uv;
-            
-                        out vec3 n;
             
             
                         
@@ -585,23 +575,11 @@ function main() {
                             ModelView[2][1] = 0.0;
                             ModelView[2][2] = length(vec3(modelMatrix[2]));
                             vec4 modelPosition = ModelView * vec4(position, 1.0);
-                            n = normal;
                             gl_Position = projectionMatrix * modelPosition;
                         }
                         `, fragmentShader: `# version 300 es
                         precision mediump float;
-                        uniform vec3 shadowColor;
-                        uniform vec3 lightColor;
-                        uniform sampler2D tDiffuse;
-                        uniform vec2 resolution;
                         uniform float uAlpha;
-                        
-                    
-                        
-                    
-                        
-                        in vec3 n;
-                    
                     
                         
                         out vec4 color;
@@ -612,9 +590,9 @@ function main() {
                         void main(){
                             color = vec4(0,0,0,uAlpha);
                         }
-                        `, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, 
+                        `, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, stencilWrite: true, stencilRef: 1, stencilFunc: THREE.NotEqualStencilFunc
                         });
-                        p_contorno.scale.set(6.0, 6.0, 0);
+                        p_contorno.scale.set(6.5, 6.5, 5.0);
                         particlesOutline.push(p_contorno);
                     }
                     particles.push(p);
@@ -630,7 +608,7 @@ function main() {
                     newalpha = particles[i].getAlpha() - (particles[i].getAlpha() * particles[i].getActualLifetime(now) / (particles[i].lifetime - 1.0));
                 particles[i].update(deltat, newalpha);
                 if(outlineon){
-                    particlesOutline[i].position.set(particlesOutline[i].position.x + particles[i].getMovement().x * deltat, particlesOutline[i].position.y + (particles[i].getMovement().y) * deltat, particlesOutline[i].position.z);
+                    particlesOutline[i].position.set(particlesOutline[i].position.x + particles[i].getMovement().x * deltat, particlesOutline[i].position.y + (particles[i].getMovement().y) * deltat, particlesOutline[i].position.z + (particles[i].getMovement().z) * deltat);
                     if(transparencyon && transparencylifetimeon)
                         changeTransparencyOutline(particlesOutline[i], newalpha);
                 }
@@ -682,16 +660,13 @@ function main() {
 
             for (let i = 0; i < emission_rate_time; i++) {
                 if (particles2.length < quant_particles) {
-                    var movement = new THREE.Vector3(getRandomFloat(-10.0, 10.0, 2), getRandomFloat(10.0, 30.0, 2), 0);
+                    var movement = new THREE.Vector3(getRandomFloat(-10.0, 10.0, 2), getRandomFloat(10.0, 30.0, 2), getRandomFloat(-5.0, 5.0, 2));
                     p = new Particle(new THREE.Vector3(29.0, 74.0, -864.0), now, 0.8, 6, movement);
                     p.getParticle().scale.set(0.5, 0.5, 0.5);
                     if(outlineon){
                         let p_contorno = p.getParticle().clone();
                         p_contorno.material = new THREE.RawShaderMaterial({
                             uniforms: {
-                                resolution: { value: new THREE.Vector2() },
-                                shadowColor: { value: new THREE.Color(0xc0c0c0) },
-                                lightColor: { value: new THREE.Color(0xdcdcdc) },
                                 uAlpha: { value: p.getAlpha() },
                             }, vertexShader: `# version 300 es
                 uniform mat4 projectionMatrix;
@@ -703,11 +678,6 @@ function main() {
                 
 
                 in vec3 position;
-                in vec3 normal;
-                in vec4 TexCoord;
-                in vec2 uv;
-
-                out vec3 n;
 
 
                 
@@ -729,22 +699,11 @@ function main() {
                     ModelView[2][1] = 0.0;
                     ModelView[2][2] = length(vec3(modelMatrix[2]));
                     vec4 modelPosition = ModelView * vec4(position, 1.0);
-                    n = normal;
                     gl_Position = projectionMatrix * modelPosition;
                 }
                 `, fragmentShader: `# version 300 es
                 precision mediump float;
-                uniform vec3 shadowColor;
-                uniform vec3 lightColor;
-                uniform sampler2D tDiffuse;
-                uniform vec2 resolution;
                 uniform float uAlpha;
-                
-            
-                
-            
-                
-                in vec3 n;
             
             
                 
@@ -756,11 +715,12 @@ function main() {
                 void main(){
                     color = vec4(0,0,0,uAlpha);
                 }
-                `, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true
+                `, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, stencilWrite: true, stencilRef: 2, stencilFunc: THREE.NotEqualStencilFunc
                         });
                         p_contorno.scale.set(0.8, 0.8, 0);
                         particlesOutline2.push(p_contorno);
                     }
+                    p.getParticle().material.stencilRef = 2;
                     particles2.push(p);
                     Emissionthen2 = now;
                 }
@@ -774,9 +734,12 @@ function main() {
                     newalpha = particles2[i].getAlpha() - (particles2[i].getAlpha() * particles2[i].getActualLifetime(now) / (particles2[i].lifetime - 2.5));
                 particles2[i].update(deltat, newalpha);
                 if(outlineon){
-                    particlesOutline2[i].position.set(particlesOutline2[i].position.x + particles2[i].getMovement().x * deltat, particlesOutline2[i].position.y + (particles2[i].getMovement().y) * deltat, particlesOutline2[i].position.z);
-                    if(transparencyon && transparencylifetimeon)
+                    particles2[i].getParticle().material.stencilRef = 2;
+                    particlesOutline2[i].position.set(particlesOutline2[i].position.x + particles2[i].getMovement().x * deltat, particlesOutline2[i].position.y + (particles2[i].getMovement().y) * deltat, particlesOutline2[i].position.z + (particles2[i].getMovement().z) * deltat);
+                    if(transparencyon && transparencylifetimeon){
                         changeTransparencyOutline(particlesOutline2[i], newalpha);
+                        particlesOutline2[i].material.stencilRef = 2;
+                    }
                 }
                 if (particles2[i].getActualLifetime(now) < 1) {
                     particles2[i].getParticle().scale.set(particles2[i].getParticle().scale.x + 0.02, particles2[i].getParticle().scale.y + 0.02, particles2[i].getParticle().scale.z + 0.02);
@@ -906,8 +869,8 @@ function main() {
         renderer.render(scene, camera);
         then = now;
         animate(mixers, deltat); //chama animação
-        if (flagcampones == 1) {//zera flag de animação se ativada
-            flagcampones = 0;
+        if (flagpeasant == 1) {//zera flag de animação se ativada
+            flagpeasant = 0;
         }
         requestAnimationFrame(render);
     }
