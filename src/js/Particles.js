@@ -1,6 +1,8 @@
 import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threejs/r132/build/three.module.js';
 import { ColladaLoader } from 'https://threejsfundamentals.org/threejs/resources/threejs/r132/examples/jsm/loaders/ColladaLoader.js';
 import { FBXLoader } from 'https://threejsfundamentals.org/threejs/resources/threejs/r132/examples/jsm/loaders/FBXLoader.js';
+import {OBJLoader} from 'https://threejsfundamentals.org/threejs/resources/threejs/r132/examples/jsm/loaders/OBJLoader.js';
+import {GLTFLoader} from 'https://threejsfundamentals.org/threejs/resources/threejs/r132/examples/jsm/loaders/GLTFLoader.js';
 
 function getRandomFloat(min, max, decimals) {
     const str = (Math.random() * (max - min) + min).toFixed(decimals);
@@ -23,14 +25,17 @@ function main() {
     const renderer = new THREE.WebGLRenderer({ canvas });
     var gl = renderer.getContext();
     const fov = 45;
-    var flagcampones = 0; //se a animação do aladdin acabou
+    var flagpeasant = 0; //se a animacao do campones acabou
     const aspect = 2;
     const near = 0.1;
     const far = 150000;
     var mixers = [];
-    var camerarotationy = 0; //informa a rotação da camera
+    var camerarotationy = 0; //informa a rotacao da camera
     let Emissionthen = 0;
     let Emissionthen2 = 0;
+    let Emissionthen3 = 0;
+    let Emissionthen4 = 0;
+    var style = "bolha"; //estilo da particula: 0 para bolha, 1 para poeira, 2 para nuvem
     var transparencyon = true; //ativa transparencia
     var transparencylifetimeon = true; //ativa transparencia de acordo com o tempo de vida da particula
     var outlineon = true; //ativa contorno
@@ -38,16 +43,16 @@ function main() {
     camera.position.set(0, 10, 50);
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xdddddd);
-    var ceugeometry = new THREE.SphereGeometry(10000, 32, 16); //cria esfera do céu
-    var ceuMaterials = new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load("/Textures/skycube_1/sky.jpg"), side: THREE.DoubleSide }); //textura do céu
+    var ceugeometry = new THREE.SphereGeometry(10000, 32, 16); //cria esfera do ceu
+    var ceuMaterials = new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load("/Textures/skycube_1/sky.jpg"), side: THREE.DoubleSide }); //textura do ceu
     var ceu = new THREE.Mesh(ceugeometry, ceuMaterials);
     scene.add(ceu);
 
-    function loopCampones(mixer) { //faz com que o próximo movement do loop seja de onde o ultimo parou
+    function looppeasant(mixer) { //faz com que o proximo movement do loop seja de onde o ultimo parou
         var objeto = mixer.getRoot();
         mixer.addEventListener('loop', function (e) {
-            if (flagcampones == 0) {
-                flagcampones = 1;
+            if (flagpeasant == 0) {
+                flagpeasant = 1;
                 objeto.rotateY(degToRad(180));
                 objeto.translateX(-3);
                 objeto.translateZ(-18);
@@ -55,13 +60,13 @@ function main() {
         });
     }
 
-    function animate(mixers, delta) { //faz animação
+    function animate(mixers, delta) { //faz animacao
         requestAnimationFrame(animate);
         if (mixers) {
             for (var i = 0; i < mixers.length; i++) {
                 mixers[i].update(delta);
-                if (mixers[i].name == "campones") { //se for animação do aladdin
-                    loopCampones(mixers[i]);
+                if (mixers[i].name == "peasant") { //se for animacao do campones
+                    looppeasant(mixers[i]);
                 }
             }
         }
@@ -86,37 +91,54 @@ function main() {
 
      const fbxLoader = new FBXLoader(); 
      const colladaloader = new ColladaLoader();
-     fbxLoader.load('/Models/Cidade/TEST2.fbx', (city) => { //cria cidade
-         city.translateZ(-1000);
-         city.scale.set(10,10,10);
-         scene.add( city );
+     const objLoader = new OBJLoader();
+     const gltfLoader = new GLTFLoader();
+
+     fbxLoader.load('/Models/town/TEST2.fbx', (town) => { //cria cidade
+         town.translateZ(-1000);
+         town.scale.set(10,10,10);
+         scene.add( town );
      } );
+
+     gltfLoader.load('/Models/magic_lamp/scene.gltf', (gltf) => { //cria lampada magica
+        var root = gltf.scene;
+        root.translateX(-110);
+        root.translateY(58);
+        root.translateZ(-1160);
+        scene.add(root);
+    }); 
  
-     colladaloader.load( 'Models/Campones/Campones.dae', function ( collada ) { //cria aladdin
-         var campones = collada.scene;
-         campones.traverse( function ( node ) {
+     colladaloader.load( 'Models/peasant/peasant.dae', function ( collada ) { //cria campones
+         var peasant = collada.scene;
+         peasant.traverse( function ( node ) {
              if ( node.isSkinnedMesh ) {
                  node.geometry.computeVertexNormals(); //computa vetores normais
              }
          } );
-       campones.translateX(50);
-       campones.translateY(0);
-       campones.translateZ(-750);
-       campones.scale.set(0.1,0.1,0.1);
-       campones.children[0].children.forEach(child => {
+       peasant.translateX(50);
+       peasant.translateY(0);
+       peasant.translateZ(-756);
+       peasant.scale.set(0.1,0.1,0.1);
+       peasant.children[0].children.forEach(child => {
              if (child.type == "LineSegments") {
                  child.visible = false; 
              }
          });
-         const mixer = new THREE.AnimationMixer(campones);
-         const idle = mixer.clipAction(campones.animations[0]); 
+         const mixer = new THREE.AnimationMixer(peasant);
+         const idle = mixer.clipAction(peasant.animations[0]); 
          idle.clampWhenFinished = true;
          idle.play();
-         mixer.name="campones";
+         mixer.name="peasant";
          mixers.push(mixer);
-         scene.add(campones);
+         scene.add(peasant);
  
      } ); 
+
+     var cloud;
+
+     objLoader.load('/Models/cloud/cloud.obj', (root) => {
+        cloud = root.children[0].geometry;
+    });  
 
 
     function bubbleSortParticles(array, camera, outline) {
@@ -162,11 +184,12 @@ function main() {
         }
     }
 
-    function changeTransparency(particle, alpha) {
+    function changeTransparency(particle, alpha, shadowColor, lightColor, stencilref, billboard) {
         var vertCode = `# version 300 es
             uniform mat4 projectionMatrix;
             uniform mat4 viewMatrix;
             uniform mat4 modelMatrix;
+            uniform bool billboard;
 
 
 
@@ -186,19 +209,21 @@ function main() {
             void main(){
                 mat4 ModelView = viewMatrix* modelMatrix;
                 
-                ModelView[0][0] = length(vec3(modelMatrix[0]));
-                ModelView[0][1] = 0.0;
-                ModelView[0][2] = 0.0;
+                if(billboard){
+                    ModelView[0][0] = length(vec3(modelMatrix[0]));
+                    ModelView[0][1] = 0.0;
+                    ModelView[0][2] = 0.0;
 
-                
-                ModelView[1][0] = 0.0;
-                ModelView[1][1] =  length(vec3(modelMatrix[1]));
-                ModelView[1][2] = 0.0;
+                    
+                    ModelView[1][0] = 0.0;
+                    ModelView[1][1] =  length(vec3(modelMatrix[1]));
+                    ModelView[1][2] = 0.0;
 
-                
-                ModelView[2][0] = 0.0;
-                ModelView[2][1] = 0.0;
-                ModelView[2][2] = length(vec3(modelMatrix[2]));
+                    
+                    ModelView[2][0] = 0.0;
+                    ModelView[2][1] = 0.0;
+                    ModelView[2][2] = length(vec3(modelMatrix[2]));
+                }
                 vec4 modelPosition = ModelView * vec4(position, 1.0);
                 n = normal;
                 FragPos = vec3(modelMatrix * vec4(position, 1.0));
@@ -209,8 +234,6 @@ function main() {
             precision mediump float;
             uniform vec3 shadowColor;
             uniform vec3 lightColor;
-            uniform sampler2D tDiffuse;
-            uniform vec2 resolution;
             uniform float uAlpha;
             
 
@@ -228,7 +251,7 @@ function main() {
 
             
             void main(){
-                vec3 light_direction = vec3(1,1.0,3.14) - FragPos;
+                vec3 light_direction = vec3(500,500,500) - FragPos;
                 float temp = max(0.0,dot(n, normalize(light_direction)));
                 color = vec4(temp, temp, temp, 1.0);
                 color = clamp(color,0.0,1.0);
@@ -236,9 +259,9 @@ function main() {
                 color[0] = pow(color[0], gamma);
                 color[1] = pow(color[1], gamma);
                 color[2] = pow(color[2], gamma);
-                color = color * 6.0;
+                color = color * 100.0;
                 color = floor(color);
-                color = color / 6.0;
+                color = color / 100.0;
                 color[0] = pow(color[0], 1.4/gamma);
                 color[1] = pow(color[1], 1.0/gamma);
                 color[2] = pow(color[2], 1.0/gamma);
@@ -248,29 +271,28 @@ function main() {
             `;
         var SphereMaterials = new THREE.RawShaderMaterial({
             uniforms: {
-                resolution: { value: new THREE.Vector2() },
-                shadowColor: { value: new THREE.Color(0xc0c0c0) },
-                lightColor: { value: new THREE.Color(0xdcdcdc) },
+                shadowColor: { value: shadowColor },
+                lightColor: { value: lightColor },
                 uAlpha: { value: alpha },
-            }, vertexShader: vertCode, fragmentShader: fragCode, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true
+                billboard: {value: billboard}
+            }, vertexShader: vertCode, fragmentShader: fragCode, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, stencilWrite: true, stencilRef: stencilref, stencilFunc:THREE.AlwaysStencilFunc, stencilZPass: THREE.ReplaceStencilOp
         });
         particle.material = SphereMaterials;
     }
 
-    function changeTransparencyOutline(particle, alpha) {
+    function changeTransparencyOutline(particle, alpha, stencilref, billboard) {
         var vertCode = `# version 300 es
             uniform mat4 projectionMatrix;
             uniform mat4 viewMatrix;
             uniform mat4 modelMatrix;
+            uniform bool billboard;
 
 
 
             
 
             in vec3 position;
-            in vec3 normal;
-            in vec4 TexCoord;
-            in vec2 uv;
+
 
 
 
@@ -279,29 +301,27 @@ function main() {
             void main(){
                 mat4 ModelView = viewMatrix* modelMatrix;
                 
-                ModelView[0][0] = length(vec3(modelMatrix[0]));
-                ModelView[0][1] = 0.0;
-                ModelView[0][2] = 0.0;
+                if(billboard){
+                    ModelView[0][0] = length(vec3(modelMatrix[0]));
+                    ModelView[0][1] = 0.0;
+                    ModelView[0][2] = 0.0;
 
-                
-                ModelView[1][0] = 0.0;
-                ModelView[1][1] =  length(vec3(modelMatrix[1]));
-                ModelView[1][2] = 0.0;
+                    
+                    ModelView[1][0] = 0.0;
+                    ModelView[1][1] =  length(vec3(modelMatrix[1]));
+                    ModelView[1][2] = 0.0;
 
-                
-                ModelView[2][0] = 0.0;
-                ModelView[2][1] = 0.0;
-                ModelView[2][2] = length(vec3(modelMatrix[2]));
+                    
+                    ModelView[2][0] = 0.0;
+                    ModelView[2][1] = 0.0;
+                    ModelView[2][2] = length(vec3(modelMatrix[2]));
+                }
                 vec4 modelPosition = ModelView * vec4(position, 1.0);
                 gl_Position = projectionMatrix * modelPosition;
             }
             `;
         var fragCode = `# version 300 es
             precision mediump float;
-            uniform vec3 shadowColor;
-            uniform vec3 lightColor;
-            uniform sampler2D tDiffuse;
-            uniform vec2 resolution;
             uniform float uAlpha;
             
 
@@ -322,28 +342,27 @@ function main() {
             `;
         var SphereMaterials = new THREE.RawShaderMaterial({
             uniforms: {
-                resolution: { value: new THREE.Vector2() },
-                shadowColor: { value: new THREE.Color(0xc0c0c0) },
-                lightColor: { value: new THREE.Color(0xdcdcdc) },
+                billboard: {value: billboard},
                 uAlpha: { value: alpha },
-            }, vertexShader: vertCode, fragmentShader: fragCode, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true
+            }, vertexShader: vertCode, fragmentShader: fragCode, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, stencilWrite: true, stencilRef: stencilref, stencilFunc: THREE.NotEqualStencilFunc
         });
         particle.material = SphereMaterials;
     }
 
 
     class Particle {
-        constructor(position, now, alpha, lifetime, movement) {
+        constructor(position, now, alpha, lifetime, movement, shadowColor, lightColor, stencilref, billboard) {
             if (!transparencyon)
                 alpha = 1.0;
             var geometry = new THREE.SphereGeometry(2, 32, 16);
+            if(style == "poeira"){
             geometry.dynamic = true;
             geometry.attributes.position.needsUpdate = true;
             var positions = geometry.getAttribute("position");
             for (let i = 0; i < positions.count; i++) {
-                let Amplitudex = getRandomFloat(0.1, 0.8, 2);
-                let Amplitudey = getRandomFloat(0.1, 0.8, 2);
-                let Amplitudez = getRandomFloat(0.1, 0.8, 2);
+                let Amplitudex = getRandomFloat(0.1, 0.2, 2);
+                let Amplitudey = getRandomFloat(0.1, 0.2, 2);
+                let Amplitudez = getRandomFloat(0.1, 0.2, 2);
                 var x = positions.getX(i);
                 var y = positions.getY(i);
                 var z = positions.getZ(i);
@@ -355,10 +374,19 @@ function main() {
             }
             geometry.setAttribute('position', positions);
             geometry.computeVertexNormals();
+        }
+        this.shadowColor = shadowColor;
+        this.lightColor = lightColor;
+        this.stencilref = stencilref;
+        this.billboard = billboard;
+        this.movementside = getRandomFloat(-5,5,1);
+        this.movementside = Math.trunc(this.movementside);
+        this.movementside = Math.sign(this.movementside);
             this.vertCode = `# version 300 es
             uniform mat4 projectionMatrix;
             uniform mat4 viewMatrix;
             uniform mat4 modelMatrix;
+            uniform bool billboard;
 
 
 
@@ -378,19 +406,21 @@ function main() {
             void main(){
                 mat4 ModelView = viewMatrix* modelMatrix;
                 
-                ModelView[0][0] = length(vec3(modelMatrix[0]));
-                ModelView[0][1] = 0.0;
-                ModelView[0][2] = 0.0;
+                if(billboard){
+                    ModelView[0][0] = length(vec3(modelMatrix[0]));
+                    ModelView[0][1] = 0.0;
+                    ModelView[0][2] = 0.0;
 
-                
-                ModelView[1][0] = 0.0;
-                ModelView[1][1] =  length(vec3(modelMatrix[1]));
-                ModelView[1][2] = 0.0;
+                    
+                    ModelView[1][0] = 0.0;
+                    ModelView[1][1] =  length(vec3(modelMatrix[1]));
+                    ModelView[1][2] = 0.0;
 
-                
-                ModelView[2][0] = 0.0;
-                ModelView[2][1] = 0.0;
-                ModelView[2][2] = length(vec3(modelMatrix[2]));
+                    
+                    ModelView[2][0] = 0.0;
+                    ModelView[2][1] = 0.0;
+                    ModelView[2][2] = length(vec3(modelMatrix[2]));
+                }
                 vec4 modelPosition = ModelView * vec4(position, 1.0);
                 n = normal;
                 FragPos = vec3(modelMatrix * vec4(position, 1.0));
@@ -401,8 +431,6 @@ function main() {
             precision mediump float;
             uniform vec3 shadowColor;
             uniform vec3 lightColor;
-            uniform sampler2D tDiffuse;
-            uniform vec2 resolution;
             uniform float uAlpha;
             
 
@@ -420,16 +448,16 @@ function main() {
 
             
             void main(){
-                vec3 light_direction = vec3(1,1.0,3.14) - FragPos;
+                vec3 light_direction = vec3(500,500,500) - FragPos;
                 float temp = max(0.0,dot(n, normalize(light_direction)));
                 color = vec4(temp, temp, temp, 1.0);
                 float gamma = 3.7;
                 color[0] = pow(color[0], gamma);
                 color[1] = pow(color[1], gamma);
                 color[2] = pow(color[2], gamma);
-                color = color * 6.0;
+                color = color * 100.0;
                 color = floor(color);
-                color = color / 6.0;
+                color = color / 100.0;
                 color[0] = pow(color[0], 1.0/gamma);
                 color[1] = pow(color[1], 1.0/gamma);
                 color[2] = pow(color[2], 1.0/gamma);
@@ -439,16 +467,18 @@ function main() {
             `;
             var SphereMaterials = new THREE.RawShaderMaterial({
                 uniforms: {
-                    resolution: { value: new THREE.Vector2() },
-                    shadowColor: { value: new THREE.Color(0xc0c0c0) },
-                    lightColor: { value: new THREE.Color(0xdcdcdc) },
+                    shadowColor: { value: this.shadowColor },
+                    lightColor: { value: this.lightColor },
                     uAlpha: { value: alpha },
-                }, vertexShader: this.vertCode, fragmentShader: this.fragCode, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true
+                    billboard: {value: this.billboard}
+                }, vertexShader: this.vertCode, fragmentShader: this.fragCode, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, stencilWrite: true, stencilRef: stencilref, stencilFunc:THREE.AlwaysStencilFunc, stencilZPass: THREE.ReplaceStencilOp
             });
-            this.particle = new THREE.Mesh(geometry, SphereMaterials);
+            if(style == "nuvem")
+                this.particle = new THREE.Mesh(cloud, SphereMaterials);
+            else
+                this.particle = new THREE.Mesh(geometry, SphereMaterials);
             this.particle.position.set(position.x, position.y, position.z);
             this.movement = movement;
-            this.movementside = getRandomFloat(-1.0, 1.0, 0);
             if (this.movement.x >= 0 && this.movement.x < 0.4) {
                 this.movement.x += 1;
             }
@@ -465,14 +495,34 @@ function main() {
             return this.movement;
         }
 
+        getMovementSide() {
+            return this.movementside;
+        }
+
+        getStencilRef() {
+            return this.stencilref;
+        }
+
+        getBillboard() {
+            return this.billboard;
+        }
+
         setParticlePosition(position) {
             this.particle.position.set(position.x, position.y, position.z);
         }
 
-        update(deltat, newalpha) {
-            this.particle.position.set(this.particle.position.x + this.movement.x * deltat, this.particle.position.y + (this.movement.y) * deltat, this.particle.position.z);
+        update(deltat, newalpha, movex, movey, movez, invertside) {
+            if(movex)
+                if(invertside != 0)
+                    this.particle.position.set(this.particle.position.x + this.movement.x * deltat * invertside, this.particle.position.y, this.particle.position.z);
+                else
+                    this.particle.position.set(this.particle.position.x + this.movement.x * deltat * this.movementside, this.particle.position.y, this.particle.position.z);
+            if(movey)
+                this.particle.position.set(this.particle.position.x, this.particle.position.y + (this.movement.y) * deltat, this.particle.position.z);
+            if(movez)
+                this.particle.position.set(this.particle.position.x, this.particle.position.y, this.particle.position.z + (this.movement.z) * deltat);
             if(transparencyon && transparencylifetimeon){
-                changeTransparency(this.particle, newalpha);
+                changeTransparency(this.particle, newalpha, this.shadowColor, this.lightColor, this.stencilref, this.billboard);
             }
         }
 
@@ -513,11 +563,17 @@ function main() {
     let particlesOutline = [];
     let particles2 = [];
     let particlesOutline2 = [];
+    let particles3 = [];
+    let particlesOutline3 = [];
+    let particles4 = [];
+    let particlesOutline4 = [];
     let transparent = [];
 
 
     transparent.push(new ObjectTransparent(Object.keys({ particles })[0], particles));
     transparent.push(new ObjectTransparent(Object.keys({ particles2 })[0], particles2));
+    transparent.push(new ObjectTransparent(Object.keys({ particles3 })[0], particles3));
+    transparent.push(new ObjectTransparent(Object.keys({ particles4 })[0], particles4));
 
 
 
@@ -533,37 +589,37 @@ function main() {
         }
         //Particle System fumaca do campones
         let p;
-        let quant_particles = 1000;
-        let emission_rate_time = 30;
+        let quant_particles;
+        let emission_rate_time;
+        
         if (now - Emissionthen >= 0.5) {
+
+            quant_particles = 1000;
+            emission_rate_time = 30;
+            transparencylifetimeon = true;
+            style = "nuvem";
             for (let i = 0; i < emission_rate_time; i++) {
                 if (particles.length < quant_particles) {
-                    var movement = new THREE.Vector3(getRandomFloat(-15.0, 15.0, 2), getRandomFloat(5.0, 20.0, 2), 0);
-                    p = new Particle(new THREE.Vector3(40.0, 5.0, -760.0), now, 0.2, 6, movement);
+                    var movement = new THREE.Vector3(getRandomFloat(-15.0, 15.0, 2), getRandomFloat(5.0, 20.0, 2), getRandomFloat(-5.0, 5.0, 2));
+                    p = new Particle(new THREE.Vector3(45.0, 5.0, -760.0), now, 0.2, 6, movement, new THREE.Color(0x808080), new THREE.Color(0xdcdcdc), 1, false);
                     p.getParticle().scale.set(5.5, 5.5, 5.5);
                     if(outlineon){
                         let p_contorno = p.getParticle().clone();
                         p_contorno.material = new THREE.RawShaderMaterial({
                             uniforms: {
-                                resolution: { value: new THREE.Vector2() },
-                                shadowColor: { value: new THREE.Color(0xc0c0c0) },
-                                lightColor: { value: new THREE.Color(0xdcdcdc) },
+                                billboard: {value: p.getBillboard()},
                                 uAlpha: { value: p.getAlpha() },
                             }, vertexShader: `# version 300 es
                         uniform mat4 projectionMatrix;
                         uniform mat4 viewMatrix;
                         uniform mat4 modelMatrix;
+                        uniform bool billboard;
             
             
             
                         
             
                         in vec3 position;
-                        in vec3 normal;
-                        in vec4 TexCoord;
-                        in vec2 uv;
-            
-                        out vec3 n;
             
             
                         
@@ -571,37 +627,27 @@ function main() {
                         void main(){
                             mat4 ModelView = viewMatrix* modelMatrix;
                             
-                            ModelView[0][0] = length(vec3(modelMatrix[0]));
-                            ModelView[0][1] = 0.0;
-                            ModelView[0][2] = 0.0;
-                            
-                            
-                            ModelView[1][0] = 0.0;
-                            ModelView[1][1] =  length(vec3(modelMatrix[1]));
-                            ModelView[1][2] = 0.0;
-                            
-                            
-                            ModelView[2][0] = 0.0;
-                            ModelView[2][1] = 0.0;
-                            ModelView[2][2] = length(vec3(modelMatrix[2]));
+                            if(billboard){
+                                ModelView[0][0] = length(vec3(modelMatrix[0]));
+                                ModelView[0][1] = 0.0;
+                                ModelView[0][2] = 0.0;
+                                
+                                
+                                ModelView[1][0] = 0.0;
+                                ModelView[1][1] =  length(vec3(modelMatrix[1]));
+                                ModelView[1][2] = 0.0;
+                                
+                                
+                                ModelView[2][0] = 0.0;
+                                ModelView[2][1] = 0.0;
+                                ModelView[2][2] = length(vec3(modelMatrix[2]));
+                            }
                             vec4 modelPosition = ModelView * vec4(position, 1.0);
-                            n = normal;
                             gl_Position = projectionMatrix * modelPosition;
                         }
                         `, fragmentShader: `# version 300 es
                         precision mediump float;
-                        uniform vec3 shadowColor;
-                        uniform vec3 lightColor;
-                        uniform sampler2D tDiffuse;
-                        uniform vec2 resolution;
                         uniform float uAlpha;
-                        
-                    
-                        
-                    
-                        
-                        in vec3 n;
-                    
                     
                         
                         out vec4 color;
@@ -612,9 +658,9 @@ function main() {
                         void main(){
                             color = vec4(0,0,0,uAlpha);
                         }
-                        `, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, 
+                        `, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, stencilWrite: true, stencilRef: p.getStencilRef(), stencilFunc: THREE.NotEqualStencilFunc
                         });
-                        p_contorno.scale.set(6.0, 6.0, 0);
+                        p_contorno.scale.set(6.0, 6.0, 6.0);
                         particlesOutline.push(p_contorno);
                     }
                     particles.push(p);
@@ -628,11 +674,19 @@ function main() {
                 var newalpha = 1.0;
                 if(transparencyon && transparencylifetimeon)
                     newalpha = particles[i].getAlpha() - (particles[i].getAlpha() * particles[i].getActualLifetime(now) / (particles[i].lifetime - 1.0));
-                particles[i].update(deltat, newalpha);
+                var movex = true;    
+                var movey = true;  
+                var movez = true;    
+                particles[i].update(deltat, newalpha, movex, movey, movez, 1);
                 if(outlineon){
-                    particlesOutline[i].position.set(particlesOutline[i].position.x + particles[i].getMovement().x * deltat, particlesOutline[i].position.y + (particles[i].getMovement().y) * deltat, particlesOutline[i].position.z);
+                    if(movex)
+                        particlesOutline[i].position.set(particlesOutline[i].position.x + particles[i].getMovement().x * deltat, particlesOutline[i].position.y, particlesOutline[i].position.z);
+                    if(movey)
+                        particlesOutline[i].position.set(particlesOutline[i].position.x, particlesOutline[i].position.y + (particles[i].getMovement().y) * deltat, particlesOutline[i].position.z);
+                    if(movez)
+                        particlesOutline[i].position.set(particlesOutline[i].position.x, particlesOutline[i].position.y, particlesOutline[i].position.z + (particles[i].getMovement().z) * deltat);
                     if(transparencyon && transparencylifetimeon)
-                        changeTransparencyOutline(particlesOutline[i], newalpha);
+                        changeTransparencyOutline(particlesOutline[i], newalpha, particles[i].getStencilRef(), particles[i].getBillboard());
                 }
                 if (particles[i].getActualLifetime(now) < 1) {
                     particles[i].getParticle().scale.set(particles[i].getParticle().scale.x + 0.02, particles[i].getParticle().scale.y + 0.02, particles[i].getParticle().scale.z + 0.02);
@@ -643,7 +697,7 @@ function main() {
                     if (particles[i].getParticle().scale.x - 0.1 >= 0) {
                         particles[i].getParticle().scale.set(particles[i].getParticle().scale.x - 0.15, particles[i].getParticle().scale.y - 0.15, particles[i].getParticle().scale.z - 0.15);
                         if(outlineon){
-                            particlesOutline[i].scale.set(particlesOutline[i].scale.x - 0.15, particlesOutline[i].scale.y - 0.15, 0);
+                            particlesOutline[i].scale.set(particlesOutline[i].scale.x - 0.15, particlesOutline[i].scale.y - 0.15, particlesOutline[i].scale.z - 0.15);
                         }
                     }
                     else {
@@ -676,38 +730,33 @@ function main() {
 
 
         //Particle System fumaca da chamine
-        quant_particles = 1000;
-        emission_rate_time = 30;
+        
         if (now - Emissionthen2 >= 0.5) {
-
+            quant_particles = 1000;
+            emission_rate_time = 30;
+            style = "poeira";
             for (let i = 0; i < emission_rate_time; i++) {
                 if (particles2.length < quant_particles) {
-                    var movement = new THREE.Vector3(getRandomFloat(-10.0, 10.0, 2), getRandomFloat(10.0, 30.0, 2), 0);
-                    p = new Particle(new THREE.Vector3(29.0, 74.0, -864.0), now, 0.8, 6, movement);
+                    var movement = new THREE.Vector3(getRandomFloat(-10.0, 10.0, 2), getRandomFloat(10.0, 30.0, 2), getRandomFloat(-5.0, 5.0, 2));
+                    p = new Particle(new THREE.Vector3(29.0, 74.0, -864.0), now, 0.8, 6, movement, new THREE.Color(0x808080), new THREE.Color(0xdcdcdc), 2, false);
                     p.getParticle().scale.set(0.5, 0.5, 0.5);
                     if(outlineon){
                         let p_contorno = p.getParticle().clone();
                         p_contorno.material = new THREE.RawShaderMaterial({
                             uniforms: {
-                                resolution: { value: new THREE.Vector2() },
-                                shadowColor: { value: new THREE.Color(0xc0c0c0) },
-                                lightColor: { value: new THREE.Color(0xdcdcdc) },
+                                billboard: {value: p.getBillboard()},
                                 uAlpha: { value: p.getAlpha() },
                             }, vertexShader: `# version 300 es
                 uniform mat4 projectionMatrix;
                 uniform mat4 viewMatrix;
                 uniform mat4 modelMatrix;
+                uniform bool billboard;
 
 
 
                 
 
                 in vec3 position;
-                in vec3 normal;
-                in vec4 TexCoord;
-                in vec2 uv;
-
-                out vec3 n;
 
 
                 
@@ -715,36 +764,27 @@ function main() {
                 void main(){
                     mat4 ModelView = viewMatrix* modelMatrix;
                     
-                    ModelView[0][0] = length(vec3(modelMatrix[0]));
-                    ModelView[0][1] = 0.0;
-                    ModelView[0][2] = 0.0;
-                    
-                    
-                    ModelView[1][0] = 0.0;
-                    ModelView[1][1] =  length(vec3(modelMatrix[1]));
-                    ModelView[1][2] = 0.0;
-                    
-                    
-                    ModelView[2][0] = 0.0;
-                    ModelView[2][1] = 0.0;
-                    ModelView[2][2] = length(vec3(modelMatrix[2]));
+                    if(billboard){
+                        ModelView[0][0] = length(vec3(modelMatrix[0]));
+                        ModelView[0][1] = 0.0;
+                        ModelView[0][2] = 0.0;
+                        
+                        
+                        ModelView[1][0] = 0.0;
+                        ModelView[1][1] =  length(vec3(modelMatrix[1]));
+                        ModelView[1][2] = 0.0;
+                        
+                        
+                        ModelView[2][0] = 0.0;
+                        ModelView[2][1] = 0.0;
+                        ModelView[2][2] = length(vec3(modelMatrix[2]));
+                    }
                     vec4 modelPosition = ModelView * vec4(position, 1.0);
-                    n = normal;
                     gl_Position = projectionMatrix * modelPosition;
                 }
                 `, fragmentShader: `# version 300 es
                 precision mediump float;
-                uniform vec3 shadowColor;
-                uniform vec3 lightColor;
-                uniform sampler2D tDiffuse;
-                uniform vec2 resolution;
                 uniform float uAlpha;
-                
-            
-                
-            
-                
-                in vec3 n;
             
             
                 
@@ -756,9 +796,9 @@ function main() {
                 void main(){
                     color = vec4(0,0,0,uAlpha);
                 }
-                `, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true
+                `, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, stencilWrite: true, stencilRef: p.getStencilRef(), stencilFunc: THREE.NotEqualStencilFunc
                         });
-                        p_contorno.scale.set(0.8, 0.8, 0);
+                        p_contorno.scale.set(0.8, 0.8, 0.8);
                         particlesOutline2.push(p_contorno);
                     }
                     particles2.push(p);
@@ -772,22 +812,31 @@ function main() {
                 var newalpha = 1.0;
                 if(transparencyon && transparencylifetimeon)
                     newalpha = particles2[i].getAlpha() - (particles2[i].getAlpha() * particles2[i].getActualLifetime(now) / (particles2[i].lifetime - 2.5));
-                particles2[i].update(deltat, newalpha);
+                var movex = true;    
+                var movey = true;  
+                var movez = true;  
+                particles2[i].update(deltat, newalpha, movex, movey, movez, 1);
                 if(outlineon){
-                    particlesOutline2[i].position.set(particlesOutline2[i].position.x + particles2[i].getMovement().x * deltat, particlesOutline2[i].position.y + (particles2[i].getMovement().y) * deltat, particlesOutline2[i].position.z);
-                    if(transparencyon && transparencylifetimeon)
-                        changeTransparencyOutline(particlesOutline2[i], newalpha);
+                    if(movex)
+                        particlesOutline2[i].position.set(particlesOutline2[i].position.x + particles2[i].getMovement().x * deltat, particlesOutline2[i].position.y, particlesOutline2[i].position.z);
+                    if(movey)
+                        particlesOutline2[i].position.set(particlesOutline2[i].position.x, particlesOutline2[i].position.y + (particles2[i].getMovement().y) * deltat, particlesOutline2[i].position.z);
+                    if(movez)
+                        particlesOutline2[i].position.set(particlesOutline2[i].position.x, particlesOutline2[i].position.y, particlesOutline2[i].position.z + (particles2[i].getMovement().z) * deltat);
+                    if(transparencyon && transparencylifetimeon){
+                        changeTransparencyOutline(particlesOutline2[i], newalpha, particles2[i].getStencilRef(), particles2[i].getBillboard());
+                    }
                 }
                 if (particles2[i].getActualLifetime(now) < 1) {
                     particles2[i].getParticle().scale.set(particles2[i].getParticle().scale.x + 0.02, particles2[i].getParticle().scale.y + 0.02, particles2[i].getParticle().scale.z + 0.02);
                     if(outlineon)
-                        particlesOutline2[i].scale.set(particlesOutline2[i].scale.x + 0.02, particlesOutline2[i].scale.y + 0.02, 0);
+                        particlesOutline2[i].scale.set(particlesOutline2[i].scale.x + 0.02, particlesOutline2[i].scale.y + 0.02, particlesOutline2[i].scale.z + 0.02);
                 }
                 if (particles2[i].getActualLifetime(now) > particles2[i].lifetime - 2.8) {
                     if (particles2[i].getParticle().scale.x - 0.05 >= 0) {
                         particles2[i].getParticle().scale.set(particles2[i].getParticle().scale.x - 0.05, particles2[i].getParticle().scale.y - 0.05, particles2[i].getParticle().scale.z - 0.05);
                         if(outlineon){
-                            particlesOutline2[i].scale.set(particlesOutline2[i].scale.x - 0.05, particlesOutline2[i].scale.y - 0.05, 0);
+                            particlesOutline2[i].scale.set(particlesOutline2[i].scale.x - 0.05, particlesOutline2[i].scale.y - 0.05, particlesOutline2[i].scale.z - 0.05);
                         }
                     }
                     else {
@@ -819,6 +868,335 @@ function main() {
         }
 
 
+        //Particle System fumaca da lampada
+        if (now - Emissionthen3 >= 0.5) {
+            quant_particles = 1000;
+            emission_rate_time = 5;
+            style = "nuvem";
+
+            for (let i = 0; i < emission_rate_time; i++) {
+                if (particles3.length < quant_particles) {
+                    var movement = new THREE.Vector3(getRandomFloat(10.0, 12.0, 2), getRandomFloat(10.0, 15.0, 2), getRandomFloat(-5.0, 5.0, 2));
+                    p = new Particle(new THREE.Vector3(-106.0, 61.0, -1161.0), now, 0.8, 20, movement, new THREE.Color(0xde3163), new THREE.Color(0x007fff), 3, true);
+                    p.getParticle().scale.set(0.1, 0.1, 0.1);
+                    if(outlineon){
+                        let p_contorno = p.getParticle().clone();
+                        p_contorno.material = new THREE.RawShaderMaterial({
+                            uniforms: {
+                                billboard: {value: p.getBillboard()},
+                                uAlpha: { value: p.getAlpha() },
+                            }, vertexShader: `# version 300 es
+                uniform mat4 projectionMatrix;
+                uniform mat4 viewMatrix;
+                uniform mat4 modelMatrix;
+                uniform bool billboard;
+
+
+
+                
+
+                in vec3 position;
+
+
+                
+                
+                void main(){
+                    mat4 ModelView = viewMatrix* modelMatrix;
+                    
+                    if(billboard){
+                        ModelView[0][0] = length(vec3(modelMatrix[0]));
+                        ModelView[0][1] = 0.0;
+                        ModelView[0][2] = 0.0;
+                        
+                        
+                        ModelView[1][0] = 0.0;
+                        ModelView[1][1] =  length(vec3(modelMatrix[1]));
+                        ModelView[1][2] = 0.0;
+                        
+                        
+                        ModelView[2][0] = 0.0;
+                        ModelView[2][1] = 0.0;
+                        ModelView[2][2] = length(vec3(modelMatrix[2]));
+                    }
+                    vec4 modelPosition = ModelView * vec4(position, 1.0);
+                    gl_Position = projectionMatrix * modelPosition;
+                }
+                `, fragmentShader: `# version 300 es
+                precision mediump float;
+                uniform float uAlpha;
+            
+            
+                
+                out vec4 color;
+            
+                
+            
+                
+                void main(){
+                    color = vec4(0,0,0,uAlpha);
+                }
+                `, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, stencilWrite: true, stencilRef: p.getStencilRef(), stencilFunc: THREE.NotEqualStencilFunc
+                        });
+                        p_contorno.scale.set(1.5, 1.5, 1.5);
+                        particlesOutline3.push(p_contorno);
+                    }
+                    particles3.push(p);
+                    Emissionthen3 = now;
+                }
+            }
+        }
+        var deltat = (now - then) / 2;
+        for (let i = 0; i < particles3.length; i++) {
+            if (deltat < 1) {
+                var newalpha = 1.0;
+                var movex = true;    
+                var movey = true;  
+                var movez = true;  
+                if(transparencyon && transparencylifetimeon)
+                    newalpha = particles3[i].getAlpha() - (particles3[i].getAlpha() * particles3[i].getActualLifetime(now) / (particles3[i].lifetime - 2.5));
+                if (particles3[i].getActualLifetime(now) < 3) {
+                    particles3[i].getParticle().scale.set(particles3[i].getParticle().scale.x + 0.05, particles3[i].getParticle().scale.y + 0.05, particles3[i].getParticle().scale.z + 0.05);
+                    particles3[i].update(deltat, newalpha, movex, movey, movez, 1);
+                    if(outlineon){
+                        if(movex)
+                            particlesOutline3[i].position.set(particlesOutline3[i].position.x + particles3[i].getMovement().x * deltat, particlesOutline3[i].position.y, particlesOutline3[i].position.z);
+                        if(movey)
+                            particlesOutline3[i].position.set(particlesOutline3[i].position.x, particlesOutline3[i].position.y + (particles3[i].getMovement().y) * deltat, particlesOutline3[i].position.z);
+                        if(movez)
+                            particlesOutline3[i].position.set(particlesOutline3[i].position.x, particlesOutline3[i].position.y, particlesOutline3[i].position.z + (particles3[i].getMovement().z) * deltat);
+                        if(transparencyon && transparencylifetimeon){
+                            changeTransparencyOutline(particlesOutline3[i], newalpha, particles3[i].getStencilRef(), particles3[i].getBillboard());
+                        }
+                    }
+                    if(outlineon)
+                        particlesOutline3[i].scale.set(particlesOutline3[i].scale.x + 0.05, particlesOutline3[i].scale.y + 0.05, particlesOutline3[i].scale.z + 0.05);
+                }
+                if (particles3[i].getActualLifetime(now) >= 3 && particles3[i].getActualLifetime(now) < 4) {
+                    movex=false;
+                    particles3[i].update(deltat, newalpha, movex, movey, movez, 1);
+                    if(outlineon){
+                        if(movex)
+                            particlesOutline3[i].position.set(particlesOutline3[i].position.x + particles3[i].getMovement().x * deltat * 1, particlesOutline3[i].position.y, particlesOutline3[i].position.z);
+                        if(movey)
+                            particlesOutline3[i].position.set(particlesOutline3[i].position.x, particlesOutline3[i].position.y + (particles3[i].getMovement().y) * deltat, particlesOutline3[i].position.z);
+                        if(movez)
+                            particlesOutline3[i].position.set(particlesOutline3[i].position.x, particlesOutline3[i].position.y, particlesOutline3[i].position.z + (particles3[i].getMovement().z) * deltat);
+                        if(transparencyon && transparencylifetimeon){
+                            changeTransparencyOutline(particlesOutline3[i], newalpha, particles3[i].getStencilRef(), particles3[i].getBillboard());
+                         }
+                    }
+                }
+
+                if (particles3[i].getActualLifetime(now) >= 4 && particles3[i].getActualLifetime(now) < 7) {
+                    movex=true;
+                    particles3[i].update(deltat, newalpha, movex, movey, movez, -1);
+                    if(outlineon){
+                        if(movex)
+                            particlesOutline3[i].position.set(particlesOutline3[i].position.x + particles3[i].getMovement().x * deltat * -1, particlesOutline3[i].position.y, particlesOutline3[i].position.z);
+                        if(movey)
+                            particlesOutline3[i].position.set(particlesOutline3[i].position.x, particlesOutline3[i].position.y + (particles3[i].getMovement().y) * deltat, particlesOutline3[i].position.z);
+                        if(movez)
+                            particlesOutline3[i].position.set(particlesOutline3[i].position.x, particlesOutline3[i].position.y, particlesOutline3[i].position.z + (particles3[i].getMovement().z) * deltat);
+                        if(transparencyon && transparencylifetimeon){
+                            changeTransparencyOutline(particlesOutline3[i], newalpha, particles3[i].getStencilRef(), particles3[i].getBillboard());
+                         }
+                    }
+                }
+
+                if (particles3[i].getActualLifetime(now) >= 7 && particles3[i].getActualLifetime(now) < 12) {
+                    particles3[i].update(deltat, newalpha, movex, movey, movez, 0);
+                    particles3[i].getParticle().scale.set(particles3[i].getParticle().scale.x + 0.08, particles3[i].getParticle().scale.y + 0.08, particles3[i].getParticle().scale.z + 0.08);
+                    if(outlineon){
+                        if(movex)
+                            particlesOutline3[i].position.set(particlesOutline3[i].position.x + particles3[i].getMovement().x * deltat * particles3[i].getMovementSide(), particlesOutline3[i].position.y, particlesOutline3[i].position.z);
+                        if(movey)
+                            particlesOutline3[i].position.set(particlesOutline3[i].position.x, particlesOutline3[i].position.y + (particles3[i].getMovement().y) * deltat, particlesOutline3[i].position.z);
+                        if(movez)
+                            particlesOutline3[i].position.set(particlesOutline3[i].position.x, particlesOutline3[i].position.y, particlesOutline3[i].position.z + (particles3[i].getMovement().z) * deltat);
+                        if(transparencyon && transparencylifetimeon){
+                            changeTransparencyOutline(particlesOutline3[i], newalpha, particles3[i].getStencilRef(), particles3[i].getBillboard());
+                         }
+                        particlesOutline3[i].scale.set(particlesOutline3[i].scale.x + 0.08, particlesOutline3[i].scale.y + 0.08, particlesOutline3[i].scale.z + 0.08);
+                    }
+                        
+                }
+
+                if (particles3[i].getActualLifetime(now) >= 12) {
+                    movex = false;
+                    movey = false;
+                    movez = false;
+                    particles3[i].update(deltat, newalpha, movex, movey, movez, 0);
+                    if(outlineon){
+                        if(movex)
+                            particlesOutline3[i].position.set(particlesOutline3[i].position.x + particles3[i].getMovement().x * deltat * particles3[i].getMovementSide(), particlesOutline3[i].position.y, particlesOutline3[i].position.z);
+                        if(movey)
+                            particlesOutline3[i].position.set(particlesOutline3[i].position.x, particlesOutline3[i].position.y + (particles3[i].getMovement().y) * deltat, particlesOutline3[i].position.z);
+                        if(movez)
+                            particlesOutline3[i].position.set(particlesOutline3[i].position.x, particlesOutline3[i].position.y, particlesOutline3[i].position.z + (particles3[i].getMovement().z) * deltat);
+                        if(transparencyon && transparencylifetimeon){
+                            changeTransparencyOutline(particlesOutline3[i], newalpha, particles3[i].getStencilRef(), particles3[i].getBillboard());
+                         }
+                    }
+                    if (particles3[i].getParticle().scale.x - 0.05 >= 0) {
+                        particles3[i].getParticle().scale.set(particles3[i].getParticle().scale.x - 0.05, particles3[i].getParticle().scale.y - 0.05, particles3[i].getParticle().scale.z - 0.05);
+                        if(outlineon){
+                            particlesOutline3[i].scale.set(particlesOutline3[i].scale.x - 0.05, particlesOutline3[i].scale.y - 0.05, particlesOutline3[i].scale.z - 0.05);
+                        }
+                    }
+                    else {
+                        particles3[i].getParticle().scale.set(0, 0, 0);
+                        if(outlineon)
+                            particlesOutline3[i].scale.set(0, 0, 0);
+                    }
+                }
+
+                if(outlineon)
+                    scene.add(particlesOutline3[i]);
+                scene.add(particles3[i].getParticle());
+
+                if (particles3[i].getActualLifetime(now) >= particles3[i].lifetime) {
+                    scene.remove(particles3[i].getParticle());
+                    if(outlineon)
+                        scene.remove(particlesOutline3[i]);
+                    particles3.splice(i, 1);
+                    if(outlineon)
+                        particlesOutline3.splice(i, 1);
+                    i = i - 1;
+                }
+            }
+        }
+        if(transparencyon){
+            if (deltat < 1) {
+                bubbleSortParticles(particles3, camera, particlesOutline3);
+            }
+        }
+
+
+        //Particle System bolhas do lago
+        if (now - Emissionthen4 >= 0.5) {
+            quant_particles = 10;
+            emission_rate_time = 1;
+            style = "bolha";
+            transparencylifetimeon = false;
+            for (let i = 0; i < emission_rate_time; i++) {
+                if (particles4.length < quant_particles) {
+                    var movement = new THREE.Vector3(getRandomFloat(-10.0, 10.0, 2), getRandomFloat(10.0, 30.0, 2), getRandomFloat(-5.0, 5.0, 2));
+                    p = new Particle(new THREE.Vector3(-30.0, -30.0, -790.0), now, 0.3, 3, movement, new THREE.Color(0xafeeee), new THREE.Color(0xffffff), 3, true);
+                    p.getParticle().scale.set(0.1, 0.1, 0.1);
+                    if(outlineon){
+                        let p_contorno = p.getParticle().clone();
+                        p_contorno.material = new THREE.RawShaderMaterial({
+                            uniforms: {
+                                billboard: {value: p.getBillboard()},
+                                uAlpha: { value: p.getAlpha() },
+                            }, vertexShader: `# version 300 es
+                uniform mat4 projectionMatrix;
+                uniform mat4 viewMatrix;
+                uniform mat4 modelMatrix;
+                uniform bool billboard;
+
+
+
+                
+
+                in vec3 position;
+
+
+                
+                
+                void main(){
+                    mat4 ModelView = viewMatrix* modelMatrix;
+                    
+                    if(billboard){
+                        ModelView[0][0] = length(vec3(modelMatrix[0]));
+                        ModelView[0][1] = 0.0;
+                        ModelView[0][2] = 0.0;
+                        
+                        
+                        ModelView[1][0] = 0.0;
+                        ModelView[1][1] =  length(vec3(modelMatrix[1]));
+                        ModelView[1][2] = 0.0;
+                        
+                        
+                        ModelView[2][0] = 0.0;
+                        ModelView[2][1] = 0.0;
+                        ModelView[2][2] = length(vec3(modelMatrix[2]));
+                    }
+                    vec4 modelPosition = ModelView * vec4(position, 1.0);
+                    gl_Position = projectionMatrix * modelPosition;
+                }
+                `, fragmentShader: `# version 300 es
+                precision mediump float;
+                uniform float uAlpha;
+            
+            
+                
+                out vec4 color;
+            
+                
+            
+                
+                void main(){
+                    color = vec4(0,0,0,uAlpha);
+                }
+                `, wireframe: false, side: THREE.DoubleSide, depthTest: true, depthWrite: true, transparent: true, stencilWrite: true, stencilRef: p.getStencilRef(), stencilFunc: THREE.NotEqualStencilFunc
+                        });
+                        p_contorno.scale.set(0.3, 0.3, 0.3);
+                        particlesOutline4.push(p_contorno);
+                    }
+                    particles4.push(p);
+                    Emissionthen4 = now;
+                }
+            }
+        }
+        var deltat = (now - then) / 2;
+        for (let i = 0; i < particles4.length; i++) {
+            if (deltat < 1) {
+                var newalpha = 1.0;
+                if(transparencyon && transparencylifetimeon)
+                    newalpha = particles4[i].getAlpha() - (particles4[i].getAlpha() * particles4[i].getActualLifetime(now) / (particles4[i].lifetime - 2.5));
+                var movex = true;    
+                var movey = true;  
+                var movez = true;  
+                particles4[i].update(deltat, newalpha, movex, movey, movez, 1);
+                if(outlineon){
+                    if(movex)
+                        particlesOutline4[i].position.set(particlesOutline4[i].position.x + particles4[i].getMovement().x * deltat, particlesOutline4[i].position.y, particlesOutline4[i].position.z);
+                    if(movey)
+                        particlesOutline4[i].position.set(particlesOutline4[i].position.x, particlesOutline4[i].position.y + (particles4[i].getMovement().y) * deltat, particlesOutline4[i].position.z);
+                    if(movez)
+                        particlesOutline4[i].position.set(particlesOutline4[i].position.x, particlesOutline4[i].position.y, particlesOutline4[i].position.z + (particles4[i].getMovement().z) * deltat);
+                    if(transparencyon && transparencylifetimeon){
+                        changeTransparencyOutline(particlesOutline4[i], newalpha, particles4[i].getStencilRef(), particles4[i].getBillboard());
+                    }
+                }
+                if (particles4[i].getActualLifetime(now) < 1) {
+                    particles4[i].getParticle().scale.set(particles4[i].getParticle().scale.x + 0.02, particles4[i].getParticle().scale.y + 0.02, particles4[i].getParticle().scale.z + 0.02);
+                    if(outlineon)
+                        particlesOutline4[i].scale.set(particlesOutline4[i].scale.x + 0.02, particlesOutline4[i].scale.y + 0.02, particlesOutline4[i].scale.z + 0.02);
+                }
+
+                if(outlineon)
+                    scene.add(particlesOutline4[i]);
+                scene.add(particles4[i].getParticle());
+
+                if (particles4[i].getActualLifetime(now) >= particles4[i].lifetime) {
+                    scene.remove(particles4[i].getParticle());
+                    if(outlineon)
+                        scene.remove(particlesOutline4[i]);
+                    particles4.splice(i, 1);
+                    if(outlineon)
+                        particlesOutline4.splice(i, 1);
+                    i = i - 1;
+                }
+            }
+        }
+        if(transparencyon){
+            if (deltat < 1) {
+                bubbleSortParticles(particles4, camera, particlesOutline4);
+            }
+        }
+
 
 
         
@@ -837,6 +1215,12 @@ function main() {
                                 if (transparent[i].getName() == "particles2") {
                                     particlesOutline2[j].renderOrder = transparentquant + transparent[i].getObject().length;
                                 }
+                                if (transparent[i].getName() == "particles3") {
+                                    particlesOutline3[j].renderOrder = transparentquant + transparent[i].getObject().length;
+                                }
+                                if (transparent[i].getName() == "particles4") {
+                                    particlesOutline4[j].renderOrder = transparentquant + transparent[i].getObject().length;
+                                }
                             }
                         }
                         if(outlineon){
@@ -845,6 +1229,12 @@ function main() {
                             }
                             if (transparent[i].getName() == "particles2") {
                                 transparentquant = transparentquant + particles2.length;
+                            }
+                            if (transparent[i].getName() == "particles3") {
+                                transparentquant = transparentquant + particles3.length;
+                            }
+                            if (transparent[i].getName() == "particles4") {
+                                transparentquant = transparentquant + particles4.length;
                             }
                         }
                     }
@@ -905,9 +1295,9 @@ function main() {
         renderer.clear();
         renderer.render(scene, camera);
         then = now;
-        animate(mixers, deltat); //chama animação
-        if (flagcampones == 1) {//zera flag de animação se ativada
-            flagcampones = 0;
+        animate(mixers, deltat); //chama animacao
+        if (flagpeasant == 1) {//zera flag de animacao se ativada
+            flagpeasant = 0;
         }
         requestAnimationFrame(render);
     }
