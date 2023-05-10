@@ -1,6 +1,6 @@
 # Toon Shader para fumaça que trabalha com transparência e contorno
 
-Esse código é uma parte do material implementado para o meu TCC. Consiste na segunda técnica implementado no trabalho, chamada de abordagem de duplicação de objetos, consiste em recriar o toon shader original, reaproveitando somente seu processo de coloração de dois tons, dando mais opções para o estilo das partículas e adicionando contorno através da clonagem de objetos com dimensão maior e material preto.
+Esse código é uma parte do material implementado para o meu TCC. Consiste na segunda técnica implementado no trabalho, chamada de abordagem de duplicação de objetos, a qual utiliza um toon shader com coloração de dois tons, dando algumas opções de estilo para as partículas e adicionando contorno através da clonagem de objetos com dimensão maior e material preto.
 
 ## Requisitos
 
