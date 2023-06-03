@@ -255,16 +255,9 @@ function main() {
                 float temp = max(0.0,dot(n, normalize(light_direction)));
                 color = vec4(temp, temp, temp, 1.0);
                 color = clamp(color,0.0,1.0);
-                float gamma = 3.7;
-                color[0] = pow(color[0], gamma);
-                color[1] = pow(color[1], gamma);
-                color[2] = pow(color[2], gamma);
                 color = color * 100.0;
                 color = floor(color);
                 color = color / 100.0;
-                color[0] = pow(color[0], 1.4/gamma);
-                color[1] = pow(color[1], 1.0/gamma);
-                color[2] = pow(color[2], 1.0/gamma);
                 vec3 tempcolor = mix(shadowColor, lightColor, color[1]);
                 color = vec4(tempcolor, uAlpha);
             }
@@ -451,16 +444,10 @@ function main() {
                 vec3 light_direction = vec3(500,500,500) - FragPos;
                 float temp = max(0.0,dot(n, normalize(light_direction)));
                 color = vec4(temp, temp, temp, 1.0);
-                float gamma = 3.7;
-                color[0] = pow(color[0], gamma);
-                color[1] = pow(color[1], gamma);
-                color[2] = pow(color[2], gamma);
+                color = clamp(color,0.0,1.0);
                 color = color * 100.0;
                 color = floor(color);
                 color = color / 100.0;
-                color[0] = pow(color[0], 1.0/gamma);
-                color[1] = pow(color[1], 1.0/gamma);
-                color[2] = pow(color[2], 1.0/gamma);
                 vec3 tempcolor = mix(shadowColor, lightColor, color[1]);
                 color = vec4(tempcolor, uAlpha);
             }
